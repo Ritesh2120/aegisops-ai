@@ -1,12 +1,23 @@
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
+from pydantic import BaseModel
+
+from agent.local_planner import LocalDeploymentPlanner
+
 
 app = FastAPI(
     title="AegisOps AI",
     description="AI-powered cloud deployment and self-healing platform",
     version="1.0.0",
 )
+
+
+class DeploymentRequest(BaseModel):
+    request: str
+
+
+planner = LocalDeploymentPlanner()
 
 
 @app.get("/")
@@ -31,4 +42,15 @@ def version():
     return {
         "application": "AegisOps AI",
         "version": "1.0.0",
+    }
+
+
+@app.post("/deployment/plan")
+def create_deployment_plan(data: DeploymentRequest):
+    plan = planner.create_plan(data.request)
+
+    return {
+        "status": "success",
+        "request": data.request,
+        "plan": plan,
     }
