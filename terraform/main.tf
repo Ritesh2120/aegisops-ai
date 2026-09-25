@@ -99,7 +99,7 @@ resource "aws_security_group" "aegisops" {
     from_port   = 8000
     to_port     = 8000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["127.0.0.1/32"]
   }
 
   egress {
