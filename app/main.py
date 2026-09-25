@@ -1,9 +1,11 @@
+import os
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from agent.local_planner import LocalDeploymentPlanner
+from agent.planner import DeploymentPlanner
 
 
 app = FastAPI(
@@ -17,7 +19,36 @@ class DeploymentRequest(BaseModel):
     request: str
 
 
-planner = LocalDeploymentPlanner()
+class AegisOpsPlanner:
+    """Routes deployment planning to Claude or the local fallback planner."""
+
+    def __init__(self):
+        self.local_planner = LocalDeploymentPlanner()
+
+        self.use_claude = (
+            os.getenv("USE_CLAUDE", "false").lower() == "true"
+        )
+
+        self.claude_planner = None
+
+        if self.use_claude:
+            try:
+                self.claude_planner = DeploymentPlanner()
+            except RuntimeError:
+                self.claude_planner = None
+
+    def create_plan(self, request: str) -> str:
+        if self.use_claude and self.claude_planner:
+            try:
+                return self.claude_planner.create_plan(request)
+            except Exception:
+                # Fall back to the free local planner if Claude is unavailable.
+                return self.local_planner.create_plan(request)
+
+        return self.local_planner.create_plan(request)
+
+
+planner = AegisOpsPlanner()
 
 
 @app.get("/")
