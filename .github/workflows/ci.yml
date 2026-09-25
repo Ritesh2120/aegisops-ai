@@ -28,7 +28,8 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -v
+          PYTHONPATH=. python -c "from app.main import app; print('AegisOps AI import OK')"
+          PYTHONPATH=. pytest -v
 
       - name: Build Docker image
         run: |
